@@ -1,0 +1,124 @@
+
+!transition-variables
+
+    "Output gap (percent)" l_y_gap
+    "Output" l_y
+    "Output trend" l_y_tnd
+    "Output trend growth (percent, @ar)" dl_y_tnd
+    "Output growth (percent, @ar)" dl_y
+    "QoQ inflation (percent, @ar)" dl_cpi
+    "Exp. QoQ inflation (percent, @ar)" e1_dl_cpi
+    "YoY inflation (percent)" d4l_cpi
+    "Exp. YoY inflation (percent)" e1_d4l_cpi
+    "Exp. t+3 YoY inflation (percent)" e3_d4l_cpi
+    "Inflation Target (percent)" target
+    "Nominal interest rate (percent p.a.)" i
+    "Real interest rate (percent p.a.)" r
+    "Real interest rate gap (pp)" r_gap
+    "Real interest rate trend (pp)" r_tnd
+
+
+!transition-shocks
+
+    "Output gap shock" shock_l_y_gap
+    "Inflation shock" shock_dl_cpi
+    "MP shock" shock_i
+    "Potential output growth shock" shock_dl_y_tnd
+    "Real interest rate trend shock" shock_r_tnd
+    "Inflation target" shock_target
+
+
+!parameters
+
+    ss_r_tnd 
+    ss_dl_y_tnd 
+    ss_target 
+    c1_dl_cpi 
+    c2_dl_cpi 
+    c1_l_y_gap 
+    c2_l_y_gap 
+    c1_i 
+    c2_i 
+    c3_i 
+    c1_dl_y_tnd 
+    c1_r_tnd 
+    c1_target 
+
+
+!transition-equations
+
+    % Output
+
+    "Trend-cycle decomposition of output"
+    l_y = l_y_tnd + l_y_gap;
+
+    "Rate of change in output"
+    dl_y = 4*(l_y - l_y{-1});
+
+    "IS curve"
+    l_y_gap = c1_l_y_gap*l_y_gap{-1} - c2_l_y_gap*r_gap + shock_l_y_gap;
+
+    "Potential output growth"
+    dl_y_tnd = c1_dl_y_tnd*dl_y_tnd{-1} + (1-c1_dl_y_tnd)*ss_dl_y_tnd + shock_dl_y_tnd;
+
+    "Potential output level"
+    l_y_tnd = l_y_tnd{-1} + dl_y_tnd/4;
+
+
+    % Inflation
+
+    "Phillips curve"
+    dl_cpi = c1_dl_cpi*dl_cpi{-1} + (1-c1_dl_cpi)*dl_cpi{+1} + c2_dl_cpi*l_y_gap + shock_dl_cpi;
+
+    "Q/Q inflation expectations formation"
+    e1_dl_cpi = dl_cpi{+1};
+
+    "Rate of change in inflation"
+    d4l_cpi = (dl_cpi + dl_cpi{-1} + dl_cpi{-2} + dl_cpi{-3})/4;
+
+    "Y/Y inflation expectations t+1"
+    e1_d4l_cpi = d4l_cpi{+1};
+
+    "Y/Y inflation expectations t+1"
+    e3_d4l_cpi = d4l_cpi{+3};
+
+
+    % Monetary policy
+
+    "Inflation Target"
+    target = c1_target*target{-1} + (1-c1_target)*ss_target + shock_target;
+
+    "Policy reaction function"
+    i = c1_i*i{-1} + (1-c1_i)*(r_tnd + target + c2_i*(d4l_cpi{+3}-target) + c3_i*l_y_gap) + shock_i;
+
+
+    % Real interest rates
+
+    "Fisher equation"
+    r = i - d4l_cpi{+1};
+
+    "Real interest rate gap identity"
+    r_gap = r - r_tnd;
+
+    "Real interest rate trend"
+    r_tnd = c1_r_tnd*r_tnd{-1} + (1-c1_r_tnd)*ss_r_tnd + shock_r_tnd;
+
+
+!measurement-variables
+
+    "Inflation observations" obs_dl_cpi
+    "Interest rate observations" obs_i
+    "Real GDP observations" obs_l_y
+
+
+!measurement-equations
+
+    "Measurement equation for output"
+    obs_l_y = l_y;
+
+    "Measurement equation for CPI"
+    obs_dl_cpi = dl_cpi;
+
+    "Measurement equation for interest rate"
+    obs_i = i;
+
